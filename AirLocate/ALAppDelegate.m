@@ -196,17 +196,22 @@
     if([nearBeacons count]) {
         NSInteger count = [nearBeacons count];
         NSLog(@"%d Near Beacons Found", count);
+        __block NSNumber *theNearestMinor = nil;
+        __block CLLocationAccuracy theNearestAccuracy = 1.0;
         [nearBeacons enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
             CLBeacon *aBeacon = obj;
             NSLog(@"A Near Beacon Found: UUID=%@,  Major=%d, Minor=%d, Accuracy=%0.2fm", aBeacon.proximityUUID.UUIDString,
                   aBeacon.major.unsignedShortValue, aBeacon.minor.unsignedShortValue, aBeacon.accuracy);
-            if (!_nearestMinor) {
-                [self sendGreeting:aBeacon.minor];
-            }
-            else if (![aBeacon.minor isEqualToNumber:_nearestMinor]) {
-                [self sendGreeting:aBeacon.minor];
+            if (aBeacon.accuracy > 0.0) {
+                if (aBeacon.accuracy < theNearestAccuracy) {
+                    theNearestMinor = [NSNumber numberWithUnsignedShort:aBeacon.minor.unsignedShortValue];
+                    theNearestAccuracy = aBeacon.accuracy;
+                }
             }
         }];
+        if (!theNearestMinor) {
+            [self sendGreeting:theNearestMinor];
+        }
         return;
     }
 }
